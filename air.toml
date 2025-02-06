@@ -1,0 +1,14 @@
+[build]
+cmd = "go build -o tmp/main ."
+bin = "tmp/main"
+root = "."
+include_ext = ["go"]
+exclude_dir = ["tmp", "vendor", "node_modules"]
+delay = 1000
+recursive = true
+
+[log]
+level = "debug"
+
+[color]
+enable = true
