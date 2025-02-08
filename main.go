@@ -25,9 +25,12 @@ var collection *mongo.Collection
 func main() {
 	fmt.Println("hello world")
 
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatalf("error loading the .env file: %v", err) // ✅ Fixed incorrect formatting
+	if os.Getenv("ENV") != "production" {
+		// load the .env file is not in production
+		err := godotenv.Load(".env")
+		if err != nil {
+			log.Fatalf("error loading the .env file: %v", err)
+		}
 	}
 
 	MONGODB_URI := os.Getenv("MONGODB_URI")
@@ -39,7 +42,7 @@ func main() {
 	client, err := mongo.Connect(context.Background(), clientOptions)
 
 	if err != nil {
-		log.Fatalf("MongoDB connection error: %v", err) // ✅ Fixed incorrect formatting
+		log.Fatalf("MongoDB connection error: %v", err)
 	}
 
 	defer func() {
@@ -59,6 +62,11 @@ func main() {
 
 	app := fiber.New()
 
+	// app.Use(cors.New(cors.Config{
+	// 	AllowOrigins: "http://localhost:5173",
+	// 	AllowHeaders: "Origin,Content-Type, Accept",
+	// }))
+
 	app.Get("/api/todos", getTodos)
 	app.Post("/api/todos", createTodo)
 	app.Patch("/api/todos/:id", updateTodo)
@@ -66,7 +74,11 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "6000"
+		port = "8080"
+	}
+
+	if os.Getenv("ENV") == "production" {
+		app.Static("/", "./client/dist")
 	}
 
 	log.Fatal(app.Listen("0.0.0.0:" + port))
@@ -124,7 +136,7 @@ func updateTodo(c *fiber.Ctx) error {
 	objectID, err := primitive.ObjectIDFromHex(id)
 
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "invalid todo ID"}) // ✅ Fixed incorrect error message
+		return c.Status(400).JSON(fiber.Map{"error": "invalid todo ID"})
 	}
 
 	filter := bson.M{"_id": objectID}
